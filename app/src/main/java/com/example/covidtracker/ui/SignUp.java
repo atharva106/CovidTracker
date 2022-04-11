@@ -1,5 +1,6 @@
 package com.example.covidtracker.ui;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
@@ -10,6 +11,11 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import com.example.covidtracker.R;
+import com.example.covidtracker.dto.User;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class SignUp extends AppCompatActivity {
     private EditText firstNameField;
@@ -17,7 +23,8 @@ public class SignUp extends AppCompatActivity {
     private EditText usernameField;
     private EditText passwordField;
     private Button signupBtn;
-    private TextView errorMessage;
+    private TextView message;
+    private FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,7 +36,9 @@ public class SignUp extends AppCompatActivity {
         usernameField = (EditText) findViewById(R.id.etUserId);
         passwordField = (EditText) findViewById(R.id.etPass);
         signupBtn = (Button) findViewById(R.id.btnFinishSignUp);
-        errorMessage = (TextView)findViewById(R.id.displayErrorSignup);
+        message = (TextView)findViewById(R.id.displayMessageSignup);
+
+        db = FirebaseFirestore.getInstance();
 
         signupBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -41,10 +50,33 @@ public class SignUp extends AppCompatActivity {
 
     private void signup(String firstname, String lastname, String username, String password){
         if (firstname.equals("") || lastname.equals("") || username.equals("") || password.equals("")){
-            errorMessage.setText("Fill all the fields above!");
+            message.setText("Fill all the fields above!");
         }
         else{
-            // checkIfUsernameExists(); if True error else log data in database
+            db.collection("base").document(username)
+            .get().addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                @Override
+                public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                    if (task.isSuccessful()){
+                        DocumentSnapshot doc = task.getResult();
+
+                        if (doc.exists()){
+                            message.setText("Username already exists, try another!");
+                        }
+                        else{
+                            message.setText("");
+
+                            User user = new User(firstname + " " + lastname, username, password);
+
+                            db.collection("base").document(username).set(user);
+
+                            Intent lp = new Intent(SignUp.this, LandingPage.class);
+                            lp.putExtra("UserObject", user);
+                            startActivity(lp);
+                        }
+                    }
+                }
+            });
         }
     }
 }

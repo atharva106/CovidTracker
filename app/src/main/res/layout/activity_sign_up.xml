@@ -70,7 +70,7 @@
         app:layout_constraintTop_toBottomOf="@+id/etPass" />
 
     <TextView
-        android:id="@+id/displayErrorSignup"
+        android:id="@+id/displayMessageSignup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="40dp"
